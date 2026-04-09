@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>구매 직무 기업 분석</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: 'Noto Sans KR', -apple-system, sans-serif;
+      background: #F5F5F0;
+      color: #1A1A1A;
+      min-height: 100vh;
+    }
+    .container { max-width: 720px; margin: 0 auto; padding: 2rem 1rem 4rem; }
+
+    /* ── 헤더 ── */
+    .header { margin-bottom: 1.75rem; }
+    .header-tag {
+      display: inline-block;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: #1B4332; background: #D8F3DC;
+      padding: 3px 10px; border-radius: 4px; margin-bottom: 10px;
+    }
+    .header h1 { font-size: 22px; font-weight: 700; line-height: 1.35; }
+    .header p  { font-size: 13px; color: #6B7280; margin-top: 5px; }
+
+    /* ── 폼 ── */
+    .form-card {
+      background: white; border-radius: 16px;
+      padding: 1.5rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    label {
+      display: block; font-size: 11px; font-weight: 500;
+      color: #9CA3AF; text-transform: uppercase; letter-spacing: 0.07em;
+      margin-bottom: 6px;
+    }
+    input[type="text"], textarea {
+      width: 100%; padding: 10px 14px;
+      border: 1px solid #E5E7EB; border-radius: 10px;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 14px;
+      color: #1A1A1A; background: #FAFAFA; outline: none;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    input[type="text"]:focus, textarea:focus {
+      border-color: #2D6A4F;
+      box-shadow: 0 0 0 3px rgba(45,106,79,0.1);
+      background: white;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+    .form-grid {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 12px; margin-bottom: 14px;
+    }
+    @media (max-width: 500px) { .form-grid { grid-template-columns: 1fr; } }
+    .btn-main {
+      width: 100%; padding: 14px;
+      background: #2D6A4F; color: white;
+      border: none; border-radius: 12px;
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 15px; font-weight: 500;
+      cursor: pointer; margin-top: 16px;
+      transition: background 0.15s, transform 0.1s;
+    }
+    .btn-main:hover  { background: #1B4332; }
+    .btn-main:active { transform: scale(0.99); }
+    .btn-main:disabled { background: #9CA3AF; cursor: not-allowed; }
+    .form-note {
+      font-size: 11px; color: #9CA3AF;
+      margin-top: 10px; text-align: center; line-height: 1.6;
+    }
+
+    /* ── 로딩 ── */
+    .loading-wrap {
+      background: white; border-radius: 16px;
+      padding: 3rem 1.5rem; text-align: center;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    }
+    .spinner {
+      width: 38px; height: 38px;
+      border: 3px solid #E5E7EB;
+      border-top-color: #2D6A4F;
+      border-radius: 50%;
+      animation: spin 0.75s linear infinite;
+      margin: 0 auto 16px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .step-dots { display: flex; justify-content: center; gap: 7px; margin-top: 18px; }
+    .dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: #E5E7EB; transition: background 0.3s;
+    }
+    .dot.done   { background: #95D5B2; }
+    .dot.active { background: #2D6A4F; }
+
+    /* ── 에러 ── */
+    .error-card {
+      background: #FEF2F2; border: 1px solid #FECACA;
+      border-radius: 12px; padding: 1rem 1.25rem;
+    }
+
+    /* ── 대시보드 ── */
+    .dash-header {
+      display: flex; align-items: flex-start;
+      justify-content: space-between; flex-wrap: wrap;
+      gap: 10px; margin-bottom: 1.75rem;
+    }
+    .section-label {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      color: #9CA3AF; padding-bottom: 8px;
+      border-bottom: 1px solid #EFEFEF; margin-bottom: 12px;
+    }
+    .card {
+      background: white; border-radius: 14px;
+      padding: 1rem 1.25rem; margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+    }
+    .card-title {
+      font-size: 14px; font-weight: 500; color: #1A1A1A;
+      margin-bottom: 7px;
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+    }
+    .card-body { font-size: 13px; color: #4B5563; line-height: 1.75; }
+    .badge {
+      font-size: 11px; font-weight: 500;
+      padding: 2px 8px; border-radius: 6px;
+      display: inline-block; flex-shrink: 0;
+    }
+    .badge-teal   { background: #D8F3DC; color: #1B4332; }
+    .badge-blue   { background: #DBEAFE; color: #1E40AF; }
+    .badge-purple { background: #EDE9FE; color: #5B21B6; }
+    .badge-amber  { background: #FEF3C7; color: #92400E; }
+    .badge-red    { background: #FEE2E2; color: #991B1B; }
+    .badge-gray   { background: #F3F4F6; color: #374151; }
+
+    .summary-item {
+      display: flex; align-items: flex-start; gap: 10px;
+      padding: 9px 0; font-size: 13px; color: #374151; line-height: 1.65;
+      border-bottom: 1px solid #F9F9F9;
+    }
+    .summary-item:last-child { border-bottom: none; }
+    .summary-num { font-size: 11px; font-weight: 700; color: #2D6A4F; min-width: 18px; margin-top: 2px; }
+
+    .risk-red   { border-left: 3px solid #FCA5A5; }
+    .risk-amber { border-left: 3px solid #FCD34D; }
+    .concern-card { border-left: 3px solid #2D6A4F; border-radius: 0 14px 14px 0 !important; }
+
+    .kw-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
+    .kw { padding: 5px 13px; border-radius: 20px; font-size: 12px; font-weight: 500; }
+
+    .status-ok   { color: #1B4332; font-size: 12px; font-weight: 500; }
+    .status-warn { color: #92400E; font-size: 12px; font-weight: 500; }
+    .status-fail { color: #991B1B; font-size: 12px; font-weight: 500; }
+
+    .btn-back {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 10px 18px; background: white;
+      border: 1px solid #E5E7EB; border-radius: 10px;
+      font-family: 'Noto Sans KR', sans-serif; font-size: 13px;
+      color: #374151; cursor: pointer; margin-top: 1.5rem;
+      transition: background 0.15s;
+    }
+    .btn-back:hover { background: #F9FAFB; }
+    .sec { margin-bottom: 2rem; }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <div class="header">
+    <span class="header-tag">구매 직무 특화</span>
+    <h1>기업 분석 대시보드</h1>
+    <p>DART 전자공시 기반 · 취업준비생 전용</p>
+  </div>
+
+  <!-- 입력 폼 -->
+  <div id="input-section">
+    <div class="form-card">
+      <div class="form-grid">
+        <div>
+          <label>기업명</label>
+          <input type="text" id="company" placeholder="예: LG전자" />
+        </div>
+        <div>
+          <label>지원 직무</label>
+          <input type="text" id="job" placeholder="예: 구매/조달" />
+        </div>
+      </div>
+      <div>
+        <label>JD <span style="text-transform:none;letter-spacing:0;font-weight:400;">(선택 — 없으면 비워두세요)</span></label>
+        <textarea id="jd" placeholder="채용공고 JD를 붙여넣으세요."></textarea>
+      </div>
+      <button class="btn-main" id="btn-analyze" onclick="analyze()">분석 시작</button>
+      <p class="form-note">DART 전자공시를 자동으로 조회합니다<br>첫 요청은 서버 기동으로 30~50초 소요될 수 있습니다</p>
+    </div>
+  </div>
+
+  <!-- 로딩 -->
+  <div id="loading" style="display:none; margin-top:1rem;">
+    <div class="loading-wrap">
+      <div class="spinner"></div>
+      <p id="l-msg" style="font-size:15px;font-weight:500;"></p>
+      <p id="l-sub" style="font-size:13px;color:#9CA3AF;margin-top:6px;"></p>
+      <div class="step-dots">
+        <div class="dot" id="d0"></div>
+        <div class="dot" id="d1"></div>
+        <div class="dot" id="d2"></div>
+        <div class="dot" id="d3"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 에러 -->
+  <div id="error-box" style="display:none; margin-top:1rem;">
+    <div class="error-card">
+      <p style="font-size:14px;font-weight:500;color:#991B1B;margin-bottom:6px;">분석 실패</p>
+      <p id="error-msg" style="font-size:13px;color:#7F1D1D;white-space:pre-line;"></p>
+      <button class="btn-back" onclick="resetForm()" style="margin-top:12px;">다시 시도</button>
+    </div>
+  </div>
+
+  <!-- 대시보드 -->
+  <div id="dashboard" style="display:none; margin-top:1.5rem;"></div>
+
+</div>
+<script>
+const STEPS = [
+  ['DART 전자공시 조회 중','기업명 검색 및 최신 보고서 확인'],
+  ['보고서 섹션 추출 중','사업개요·원재료·매출 등 6개 섹션'],
+  ['AI 구매 관점 분석 중','구매 직무 연관성 및 리스크 해석'],
+  ['대시보드 생성 중','잠시만 기다려주세요'],
+];
+const KWT = ['teal','blue','purple','amber','teal','blue','purple','amber','gray','gray'];
+const NUMS = ['①','②','③','④','⑤','⑥'];
+
+function setStep(i) {
+  document.getElementById('l-msg').textContent = STEPS[i][0];
+  document.getElementById('l-sub').textContent = STEPS[i][1];
+  [0,1,2,3].forEach(n => {
+    const d = document.getElementById('d'+n);
+    d.className = 'dot' + (n < i ? ' done' : n === i ? ' active' : '');
+  });
+}
+function showLoading(i=0) {
+  ['input-section','error-box','dashboard'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById('loading').style.display = 'block';
+  setStep(i);
+}
+function showError(msg) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('error-box').style.display = 'block';
+  document.getElementById('input-section').style.display = 'block';
+  document.getElementById('error-msg').textContent = msg;
+  document.getElementById('btn-analyze').disabled = false;
+}
+function resetForm() {
+  ['error-box','dashboard'].forEach(id => document.getElementById(id).style.display='none');
+  document.getElementById('input-section').style.display = 'block';
+}
+function b(text,type){ return `<span class="badge badge-${type||'gray'}">${text}</span>`; }
+
+function renderDashboard(data) {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('input-section').style.display = 'block';
+  document.getElementById('btn-analyze').disabled = false;
+
+  const sc = {'DART 기반 분석':'status-ok','부분 DART 기반 분석':'status-warn','제한적 분석':'status-fail'}[data.dart_status]||'status-warn';
+
+  let h = `<div class="dash-header">
+    <div>
+      <p style="font-size:20px;font-weight:700;">${data.company}</p>
+      <p style="font-size:12px;color:#9CA3AF;margin-top:3px;">${data.report_info||''}</p>
+    </div>
+    <span class="${sc}">● ${data.dart_status||''}</span>
+  </div>`;
+
+  function sec(label, items, renderFn) {
+    if (!items?.length) return '';
+    return `<div class="sec"><div class="section-label">${label}</div>${items.map(renderFn).join('')}</div>`;
+  }
+
+  if (data.summary?.length) {
+    h += `<div class="sec"><div class="section-label">5줄 요약</div>
+      <div class="card" style="padding:.75rem 1.25rem;">
+        ${data.summary.map((s,i)=>`<div class="summary-item"><span class="summary-num">${i+1}</span><span>${s}</span></div>`).join('')}
+      </div></div>`;
+  }
+
+  h += sec('기업 동향 및 방향성', data.trends, t =>
+    `<div class="card"><div class="card-title">${b(t.badge,t.badge_type)} ${t.title}</div><div class="card-body">${t.body}</div></div>`);
+
+  h += sec('문제점 및 리스크', data.risks, r =>
+    `<div class="card ${r.badge_type==='red'?'risk-red':'risk-amber'}"><div class="card-title">${b(r.badge,r.badge_type)} ${r.title}</div><div class="card-body">${r.body}</div></div>`);
+
+  h += sec('구매 직무와의 연관성', data.procurement_relevance, p =>
+    `<div class="card"><div class="card-title">${b(p.badge,p.badge_type)} ${p.title}</div><div class="card-body">${p.body}</div></div>`);
+
+  h += sec('JD 연결 — 실제 수행 업무', data.jd_connection, j =>
+    `<div class="card"><div class="card-title">${b('업무','gray')} ${j.title}</div><div class="card-body">${j.body}</div></div>`);
+
+  h += sec('신입이 알면 좋은 것', data.for_newbies, n =>
+    `<div class="card"><div class="card-title">${n.title}</div><div class="card-body">${n.body}</div></div>`);
+
+  h += sec('팀장급이 매일 고민하는 것', data.manager_concerns, (m,i) =>
+    `<div class="card concern-card"><div class="card-title">${NUMS[i]||''} ${m.title}</div><div class="card-body">${m.body}</div></div>`);
+
+  if (data.interview_keywords?.length) {
+    h += `<div class="sec"><div class="section-label">면접 키워드</div>
+      <div class="kw-wrap">
+        ${data.interview_keywords.map((k,i)=>`<span class="kw badge-${KWT[i%KWT.length]}">${k}</span>`).join('')}
+      </div></div>`;
+  }
+
+  h += `<button class="btn-back" onclick="resetForm()">← 다른 기업 분석하기</button>`;
+  document.getElementById('dashboard').innerHTML = h;
+  document.getElementById('dashboard').style.display = 'block';
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+async function analyze() {
+  const company = document.getElementById('company').value.trim();
+  const job     = document.getElementById('job').value.trim();
+  const jd      = document.getElementById('jd').value.trim();
+  if (!company) { alert('기업명을 입력해주세요'); return; }
+
+  document.getElementById('btn-analyze').disabled = true;
+  showLoading(0);
+
+  // ① DART 조회
+  let dartData;
+  try {
+    const r = await fetch(`https://dart-gpt-proxy.onrender.com/analyzeCompanyBundle?company=${encodeURIComponent(company)}`);
+    if (!r.ok) throw new Error(`서버 오류 (${r.status})`);
+    dartData = await r.json();
+  } catch(e) {
+    showError(`DART 조회 실패: ${e.message}\n서버 기동 중일 수 있습니다. 30~50초 후 다시 시도해주세요.`);
+    return;
+  }
+  if (dartData.error && !dartData.sections) {
+    showError(`기업을 찾을 수 없습니다: ${dartData.error}`);
+    return;
+  }
+
+  setStep(2);
+
+  // ② 분석 API
+  try {
+    const r = await fetch('/api/analyze', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ company, job: job||'구매/조달', jd, dartData })
+    });
+    if (!r.ok) { const e = await r.json(); throw new Error(e.error||`오류 ${r.status}`); }
+    const analysis = await r.json();
+    setStep(3);
+    setTimeout(() => renderDashboard(analysis), 400);
+  } catch(e) {
+    showError(`분석 오류: ${e.message}`);
+  }
+}
+</script>
+</body>
+</html>
